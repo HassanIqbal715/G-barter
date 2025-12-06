@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gigs | G barter</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/gigs.css">
+    <script>
+        fetch('/header.html')
+            .then(res => res.text())
+            .then(async data => {
+                document.querySelector('#header-container').innerHTML = data;
+                await import('/script/header.js');
+            });
+    </script>
+    <script src="/script/gigs.js" defer></script>
+</head>
+<body>
+    <div id="loader"></div>
+    <div id="header-container"></div>
+
+    <div class="post-gig-container">
+        <div class="post-gig-header">
+            <div class="post-gig-plus">+</div>
+            <h1 class="post-gig-title">Post a Gig</h1>
+        </div>
+
+        <div class="post-gig-form-row">
+            <div class="post-gig-input-container">
+                <span class="post-gig-input-text">I CAN TEACH 
+                    <span class="post-gig-imp">*</span></span>
+                <input class="post-gig-input" 
+                    placeholder="e.g. Guitar, Math, Coding" id="post-gig-teach" 
+                    type="text"/>
+            </div>
+            
+            <div class="post-gig-input-container">
+                <span class="post-gig-input-text">I WANT TO LEARN 
+                    <span class="post-gig-imp">*</span></span>
+                <input class="post-gig-input" 
+                    placeholder="e.g. Spanish, Cooking" id="post-gig-want" 
+                    type="text"/>
+            </div>
+        </div>
+
+        <div class="post-gig-input-container">
+            <span class="post-gig-input-text">Description</span>
+            <textarea class="post-gig-input post-gig-textarea" 
+                placeholder="Tell people more about what you offer and what you're looking for..." id="post-gig-description"></textarea>
+        </div>
+
+        <button class="post-gig-submit" id="post-gig-submit">Create Gig</button>
+    </div>
+
+    <h1 class="gig-header">Active Gigs</h1>
+    <div class="gigs-grid" id="gigs-grid"></div>
+</body>
+</html>

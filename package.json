@@ -1,0 +1,33 @@
+{
+  "name": "g-barter",
+  "version": "1.0.0",
+  "description": "Course project for the Entrepreneurship course.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HassanIqbal715/G-barter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/HassanIqbal715/G-barter/issues"
+  },
+  "homepage": "https://github.com/HassanIqbal715/G-barter#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.0",
+    "express-session": "^1.18.2",
+    "memorystore": "^1.6.7",
+    "path": "^0.12.7",
+    "pg": "^8.16.3",
+    "url": "^0.11.4"
+  }
+}

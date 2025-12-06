@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup | G barter</title>
+    <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/header.css">
+    <script>
+        fetch('/header.html')
+            .then(res => res.text())
+            .then(async data => {
+                document.querySelector('#header-container').innerHTML = data;
+                await import('/script/header.js');
+            });
+    </script>
+    <script src="/script/signup.js" defer></script>
+</head>
+<body>
+    <div id="loader"></div>
+    <div id="header-container"></div>
+    <div class="login-box">
+        <h1 class="login-header">Create Account</h1>
+        <h2 class="login-subheader">Please enter your details to sign up.</h2>
+
+        <div class="login-form">
+            <div class="login-component">
+                <span class="login-text">Name</span>
+                <input type="text" placeholder="Firstname" class="login-input-half" 
+                    id="login-firstname">
+                <input type="text" placeholder="Lastname" class="login-input-half" 
+                    id="login-lastname">
+                    <small class="error-msg" id="name-error">Please fill the name field</small>
+            </div>
+            <div class="login-component">
+                <span class="login-text">Date of birth</span>
+                <input type="date" class="login-input" id="login-dob"/>
+                <small class="error-msg" id="dob-error">Please select a date of birth</small>
+            </div>
+            <div class="login-component">
+                <span class="login-text">Email Address</span>
+                <input type="text" placeholder="name@email.com" 
+                    class="login-input" id="login-email"/>
+                <small class="error-msg" id="email-error">Please enter a valid email</small>
+            </div>
+            <div class="login-component">
+                <span class="login-text">Password</span>
+                <input type="password" placeholder="Length 8 minimum" 
+                    class="login-input" id="login-password"/>
+                <small class="error-msg" id="password-error">Please enter a valid password with length 8 minimum</small>
+            </div>
+            <button class="login-button" id="login-submit">Create Account</button>
+            <span class="login-subtext">Already have an account? 
+                <a class="login-link" href="/login">Sign in</a></span>
+        </div>
+    </div>
+</body>
+</html>

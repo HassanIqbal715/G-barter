@@ -1,0 +1,163 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6; /* Light gray background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #1f2937;
+}
+
+/* --- Main Container --- */
+.login-box {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    padding: 48px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin: 20px;
+}
+
+/* --- Header Styles --- */
+.login-header {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.login-subheader {
+    font-size: 15px;
+    font-weight: 400;
+    color: #6b7280;
+    margin-bottom: 32px;
+    line-height: 1.5;
+}
+
+/* --- Form Components --- */
+.login-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-component {
+    margin-bottom: 20px;
+}
+
+.login-text {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.login-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+    background-color: #fff;
+}
+
+.login-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.login-input::placeholder {
+    color: #9ca3af;
+}
+
+.login-input-half {
+    width: calc(50% - 6px); /* 48% width to leave a gap in the middle */
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+    background-color: #fff;
+}
+
+.login-input-half:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.login-input-half::placeholder {
+    color: #9ca3af;
+}
+
+/* --- Button --- */
+.login-button {
+    background-color: #10b981;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    margin-bottom: 24px;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+
+.login-button:hover {
+    background-color: #059669;
+}
+
+/* --- Footer Links --- */
+.login-subtext {
+    text-align: center;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.login-link {
+    color: #10b981;
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}
+
+/* 1. Hide the error message by default */
+.error-msg {
+    display: none;
+    color: #ff3333; /* Red color */
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+/* 2. Class to show the message */
+.error-msg.show {
+    display: block;
+}
+
+/* 3. Class to turn the input border red */
+.login-input.invalid {
+    border: 1px solid #ff3333;
+    background-color: #ffe6e6; /* Optional: light red background */
+}
+
+.login-input-half.invalid {
+    border: 1px solid #ff3333;
+    background-color: #ffe6e6; /* Optional: light red background */
+}
