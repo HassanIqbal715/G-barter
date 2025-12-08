@@ -55,9 +55,11 @@ async function engageGig(advertId, btn) {
         });
         const result = await response.json();
         if (result.result) {
+            showModal("Engagement created!", "alert");
             loadEngagements();
             loadGigs();
         } else {
+            showModal(result.message, "alert");
             if (btn) {
                 btn.innerText = "Engage";
                 btn.disabled = false;
@@ -65,6 +67,7 @@ async function engageGig(advertId, btn) {
         }
     } catch (error) {
         console.error(error);
+        showModal("An error occurred", "alert");
         if (btn) {
             btn.innerText = "Engage";
             btn.disabled = false;
@@ -80,57 +83,58 @@ async function completeEngagement(engagementId) {
     });
     const result = await response.json();
     if (result.result) {
-        console.log(result.message);
+        showModal(result.message, "alert");
         loadEngagements();
+        loadGigs();
     } else {
-        console.log(result.message);
+        showModal(result.message, "alert");
     }
 }
 
 async function deleteGig(id, cardElement) {
-    if (!confirm("Are you sure you want to delete this gig?")) return;
-
-    const response = await fetch(`/api/advert/${id}`, {
-        method: "DELETE"
-    });
-    const result = await response.json();
-    if (result.result) {
-        console.log("Gig deleted");
-        if (cardElement) {
-            cardElement.remove();
+    showModal("Are you sure you want to delete this gig?", "danger", async () => {
+        const response = await fetch(`/api/advert/${id}`, {
+            method: "DELETE"
+        });
+        const result = await response.json();
+        if (result.result) {
+            showModal("Gig deleted", "alert");
+            if (cardElement) {
+                cardElement.remove();
+            } else {
+                loadGigs();
+            }
         } else {
-            loadGigs();
+            showModal(result.message, "alert");
         }
-    } else {
-        console.log(result.message);
-    }
+    }, "Delete Gig");
 }
 
 async function cancelEngagement(id, btn) {
-    if (!confirm("Are you sure you want to cancel this engagement?")) return;
-
-    if (btn) {
-        btn.innerText = "Cancelling...";
-        btn.disabled = true;
-    }
-
-    const response = await fetch("/api/cancel-engagement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ engagementId: id })
-    });
-    const result = await response.json();
-    if (result.result) {
-        console.log("Engagement cancelled");
-        loadEngagements();
-        loadGigs();
-    } else {
-        console.log(result.message);
+    showModal("Are you sure you want to cancel this engagement?", "danger", async () => {
         if (btn) {
-            btn.innerText = "Cancel";
-            btn.disabled = false;
+            btn.innerText = "Cancelling...";
+            btn.disabled = true;
         }
-    }
+
+        const response = await fetch("/api/cancel-engagement", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ engagementId: id })
+        });
+        const result = await response.json();
+        if (result.result) {
+            showModal("Engagement cancelled", "alert");
+            loadEngagements();
+            loadGigs();
+        } else {
+            showModal(result.message, "alert");
+            if (btn) {
+                btn.innerText = "Cancel";
+                btn.disabled = false;
+            }
+        }
+    }, "Cancel Engagement");
 }
 
 async function loadEngagements() {
@@ -138,6 +142,11 @@ async function loadEngagements() {
     const result = await response.json();
     
     if (!result.result) return;
+
+    // Get current user to check completion status
+    const userResponse = await fetch("/api/current-user");
+    const userData = await userResponse.json();
+    const currentUserId = userData.result ? userData.data.id : null;
 
     const activeGrid = document.querySelector("#engagements-grid");
     const completedGrid = document.querySelector("#completed-engagements-grid");
@@ -157,6 +166,10 @@ async function loadEngagements() {
             else statusText = "In Progress";
         }
 
+        const isProvider = eng.provider_id === currentUserId;
+        const isReceiver = eng.receiver_id === currentUserId;
+        const userCompleted = (isProvider && eng.provider_completed) || (isReceiver && eng.receiver_completed);
+
         card.innerHTML = `
             <div class="gig-card-body">
                 <div class="gig-exchange">
@@ -175,7 +188,10 @@ async function loadEngagements() {
                     <div class="gig-status">Status: ${statusText}</div>
                     ${eng.status !== 'completed' ? `
                         <div style="display: flex; gap: 8px;">
-                            <button onclick="completeEngagement('${eng.id}')" class="gig-action-btn">Mark Complete</button>
+                            ${!userCompleted ? 
+                                `<button onclick="completeEngagement('${eng.id}')" class="gig-action-btn">Mark Complete</button>` : 
+                                `<button disabled class="gig-action-btn" style="background-color: #9ca3af; cursor: default;">Waiting for other</button>`
+                            }
                             <button onclick="cancelEngagement('${eng.id}', this)" class="gig-action-btn" style="background-color: #ef4444;">Cancel</button>
                         </div>
                     ` : ''}
@@ -204,9 +220,10 @@ submit.addEventListener("click", async () => {
         want.value = "";
         teaching.value = "";
         loadGigs();
+        showModal("Gig created successfully!", "alert");
     } catch (error) {
         console.error(error);
-        console.log("Failed to create gig");
+        showModal("Failed to create gig", "alert");
     } finally {
         submit.disabled = false;
         submit.innerText = "Create Gig";
