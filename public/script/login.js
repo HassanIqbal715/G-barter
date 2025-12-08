@@ -90,9 +90,25 @@ async function checkLogin(email, password) {
 
 submit.addEventListener("click", async () => {
     if (checkEmail() | checkPassword()) {
-        if (! await checkLogin(email.value.trim(), password.value.trim())) {
-            toggleError(email, emailError, true);
-            toggleError(password, passwordError, true);
+        submit.disabled = true;
+        submit.innerText = "Logging in...";
+        
+        try {
+            if (! await checkLogin(email.value.trim(), password.value.trim())) {
+                toggleError(email, emailError, true);
+                toggleError(password, passwordError, true);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            submit.disabled = false;
+            submit.innerText = "Login";
         }
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        submit.click();
     }
 });

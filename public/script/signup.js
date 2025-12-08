@@ -144,8 +144,24 @@ async function createAccount(email, password, firstname, lastname, dob) {
 
 submit.addEventListener("click", async () => {
     if (checkFields()) {
-        await createAccount(email.value.trim(), password.value.trim(), 
-        firstname.value.trim(), lastname.value.trim(), dob.value.trim());
+        submit.disabled = true;
+        submit.innerText = "Signing up...";
+
+        try {
+            await createAccount(email.value.trim(), password.value.trim(), 
+            firstname.value.trim(), lastname.value.trim(), dob.value.trim());
+        } catch (error) {
+            console.error(error);
+        } finally {
+            submit.disabled = false;
+            submit.innerText = "Sign Up";
+        }
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        submit.click();
     }
 });
 
