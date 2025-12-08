@@ -71,7 +71,7 @@ async function completeEngagement(engagementId) {
     }
 }
 
-async function deleteGig(id) {
+async function deleteGig(id, cardElement) {
     if (!confirm("Are you sure you want to delete this gig?")) return;
 
     const response = await fetch(`/api/advert/${id}`, {
@@ -80,7 +80,11 @@ async function deleteGig(id) {
     const result = await response.json();
     if (result.result) {
         alert("Gig deleted");
-        loadGigs();
+        if (cardElement) {
+            cardElement.remove();
+        } else {
+            loadGigs();
+        }
     } else {
         alert(result.message);
     }
@@ -165,7 +169,22 @@ submit.addEventListener("click", async () => {
     if (!checkInputs())
         return; 
 
-    console.log(await insertGig());
+    submit.disabled = true;
+    submit.innerText = "Creating...";
+
+    try {
+        await insertGig();
+        description.value = "";
+        want.value = "";
+        teaching.value = "";
+        loadGigs();
+    } catch (error) {
+        console.error(error);
+        alert("Failed to create gig");
+    } finally {
+        submit.disabled = false;
+        submit.innerText = "Create Gig";
+    }
 });
 
 // Load gigs
@@ -225,7 +244,7 @@ function createGig(id, want, prov, desc, firstname, lastname, colorNum,
     if (isOwner) {
         actionButton.innerText = "Delete";
         actionButton.style.backgroundColor = "#ef4444";
-        actionButton.onclick = () => deleteGig(id);
+        actionButton.onclick = () => deleteGig(id, card);
     } else {
         actionButton.innerText = "Engage";
         actionButton.onclick = () => engageGig(id);
@@ -279,6 +298,8 @@ async function loadGigs() {
     const userResponse = await fetch("/api/current-user");
     const userData = await userResponse.json();
     const currentUserId = userData.result ? userData.data.id : null;
+
+    grid.innerHTML = ""; // Clear grid before adding items
 
     for (let x of gigsData.data) {
         createGig(x.id, x.skill_wanted, x.skill_provided, x.description, 
