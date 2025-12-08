@@ -41,18 +41,37 @@ async function insertGig() {
     console.log(response);
 }
 
-async function engageGig(advertId) {
-    const response = await fetch("/api/create-engagement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ advertId })
-    });
-    const result = await response.json();
-    if (result.result) {
-        alert("Engagement created!");
-        loadEngagements();
-    } else {
-        alert(result.message);
+async function engageGig(advertId, btn) {
+    if (btn) {
+        btn.innerText = "Engaging...";
+        btn.disabled = true;
+    }
+    
+    try {
+        const response = await fetch("/api/create-engagement", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ advertId })
+        });
+        const result = await response.json();
+        if (result.result) {
+            alert("Engagement created!");
+            loadEngagements();
+            loadGigs();
+        } else {
+            alert(result.message);
+            if (btn) {
+                btn.innerText = "Engage";
+                btn.disabled = false;
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        alert("An error occurred");
+        if (btn) {
+            btn.innerText = "Engage";
+            btn.disabled = false;
+        }
     }
 }
 
@@ -90,8 +109,13 @@ async function deleteGig(id, cardElement) {
     }
 }
 
-async function cancelEngagement(id) {
+async function cancelEngagement(id, btn) {
     if (!confirm("Are you sure you want to cancel this engagement?")) return;
+
+    if (btn) {
+        btn.innerText = "Cancelling...";
+        btn.disabled = true;
+    }
 
     const response = await fetch("/api/cancel-engagement", {
         method: "POST",
@@ -102,8 +126,13 @@ async function cancelEngagement(id) {
     if (result.result) {
         alert("Engagement cancelled");
         loadEngagements();
+        loadGigs();
     } else {
         alert(result.message);
+        if (btn) {
+            btn.innerText = "Cancel";
+            btn.disabled = false;
+        }
     }
 }
 
@@ -150,7 +179,7 @@ async function loadEngagements() {
                     ${eng.status !== 'completed' ? `
                         <div style="display: flex; gap: 8px;">
                             <button onclick="completeEngagement('${eng.id}')" class="gig-action-btn">Mark Complete</button>
-                            <button onclick="cancelEngagement('${eng.id}')" class="gig-action-btn" style="background-color: #ef4444;">Cancel</button>
+                            <button onclick="cancelEngagement('${eng.id}', this)" class="gig-action-btn" style="background-color: #ef4444;">Cancel</button>
                         </div>
                     ` : ''}
                 </div>
@@ -191,7 +220,7 @@ submit.addEventListener("click", async () => {
 const grid = document.querySelector("#gigs-grid");
 
 function createGig(id, want, prov, desc, firstname, lastname, colorNum, 
-    user_id, engagement_count, isOwner) {
+    user_id, engagement_count, isOwner, isEngaged) {
     const colors = [
         { backgroundColor: "#bfdbfe", color: "#1e40af" },
         { backgroundColor: "#fef3c7", color: "#92400e" },
@@ -245,9 +274,14 @@ function createGig(id, want, prov, desc, firstname, lastname, colorNum,
         actionButton.innerText = "Delete";
         actionButton.style.backgroundColor = "#ef4444";
         actionButton.onclick = () => deleteGig(id, card);
+    } else if (isEngaged) {
+        actionButton.innerText = "Engaged";
+        actionButton.disabled = true;
+        actionButton.style.backgroundColor = "#9ca3af";
+        actionButton.style.cursor = "default";
     } else {
         actionButton.innerText = "Engage";
-        actionButton.onclick = () => engageGig(id);
+        actionButton.onclick = () => engageGig(id, actionButton);
     }
 
     engagementInfo.innerText = `${engagement_count} active engagements`;
@@ -286,24 +320,40 @@ function createGig(id, want, prov, desc, firstname, lastname, colorNum,
 }
 
 async function loadGigs() {
-    let colorNum = 0;
-    const totalColors = 10;
-    const response = await fetch("/api/advert");
-    const gigsData = await response.json();
+    try {
+        let colorNum = 0;
+        const totalColors = 10;
+        const response = await fetch("/api/advert");
+        const gigsData = await response.json();
 
-    if (gigsData.result == false)
-        return;
+        if (gigsData.result == false)
+            return;
 
-    // Get current user to check ownership
-    const userResponse = await fetch("/api/current-user");
-    const userData = await userResponse.json();
-    const currentUserId = userData.result ? userData.data.id : null;
+        // Get current user to check ownership
+        const userResponse = await fetch("/api/current-user");
+        const userData = await userResponse.json();
+        const currentUserId = userData.result ? userData.data.id : null;
 
-    grid.innerHTML = ""; // Clear grid before adding items
+        // Get my engagements to check status
+        const engagementResponse = await fetch("/api/my-engagements");
+        const engagementData = await engagementResponse.json();
+        const myEngagedAdvertIds = new Set();
+        if (engagementData.result) {
+            engagementData.data.forEach(eng => {
+                if (eng.status === 'active') {
+                    myEngagedAdvertIds.add(eng.advert_id);
+                }
+            });
+        }
 
-    for (let x of gigsData.data) {
-        createGig(x.id, x.skill_wanted, x.skill_provided, x.description, 
-            x.firstname, x.lastname, (colorNum++ % totalColors), x.user_id, x.engagement_count, x.user_id === currentUserId);
+        grid.innerHTML = ""; // Clear grid before adding items
+
+        for (let x of gigsData.data) {
+            createGig(x.id, x.skill_wanted, x.skill_provided, x.description, 
+                x.firstname, x.lastname, (colorNum++ % totalColors), x.user_id, x.engagement_count, x.user_id === currentUserId, myEngagedAdvertIds.has(x.id));
+        }
+    } catch (error) {
+        console.error("Error loading gigs:", error);
     }
 }
 

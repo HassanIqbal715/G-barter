@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat | G barter</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/chat.css">
+    <script>
+        fetch('/header.html')
+            .then(res => res.text())
+            .then(async data => {
+                document.querySelector('#header-container').innerHTML = data;
+                await import('/script/header.js');
+            });
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/script/chat.js" defer></script>
+</head>
+<body>
+    <div id="loader"></div>
+    <div id="header-container"></div>
+
+    <div class="chat-container">
+        <div class="chat-sidebar">
+            <div class="chat-header">
+                <h2>Messages</h2>
+            </div>
+            <div id="chat-list" class="chat-list">
+                <!-- Chat items will be loaded here -->
+            </div>
+        </div>
+        <div class="chat-window">
+            <div id="chat-window-header" class="chat-window-header" style="display: none;">
+                <div class="chat-user-info">
+                    <div class="user-avatar" id="chat-avatar"></div>
+                    <span class="user-name" id="chat-username"></span>
+                </div>
+                <div class="chat-gig-info" id="chat-gig-info"></div>
+            </div>
+            <div id="chat-messages" class="chat-messages">
+                <div class="no-chat-selected">Select a conversation to start chatting</div>
+            </div>
+            <div id="chat-input-area" class="chat-input-area" style="display: none;">
+                <input type="text" id="message-input" placeholder="Type a message...">
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -14,29 +14,92 @@ import {
 } from "./public/script/db.js";
 import { checkCurrentUser } from "./public/middleware/middleware.js";
 import dotenv from "dotenv";
+import { Server } from "socket.io";
+import http from "http";
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 const port = 5000;
 
 const MemoryStore = memorystore(session);
 
+const sessionMiddleware = session({
+    cookie: { maxAge: 86400000 },
+    store: new MemoryStore({
+        checkPeriod: 86400000
+    }),
+    resave: false,
+    saveUninitialized: false,
+    secret: process.env.SESSION_SECRET || "The Secret"
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
-app.use(session({
-        cookie: { maxAge: 86400000 },
-        store: new MemoryStore({
-            checkPeriod: 86400000
-        }),
-        resave: false,
-        saveUninitialized: false,
-        secret: process.env.SESSION_SECRET || "The Secret"
-    })
-);
+app.use(sessionMiddleware);
 app.use(cookieParser());
+
+// Share session with socket.io
+io.engine.use(sessionMiddleware);
+
+io.on("connection", (socket) => {
+    const session = socket.request.session;
+    
+    if (session && session.user) {
+        console.log(`User connected: ${session.user.email}`);
+        
+        socket.on("join_room", async (engagementId) => {
+            // Validate user is part of engagement
+            try {
+                const query = "SELECT * FROM engagements WHERE id = $1";
+                const response = await getDataByArray(query, [engagementId]);
+                const engagement = response[0];
+
+                if (engagement) {
+                    // Get user id
+                    const userQuery = "SELECT id FROM person WHERE email = $1";
+                    const userRes = await getDataByArray(userQuery, [session.user.email]);
+                    const userId = userRes[0].id;
+
+                    if (engagement.provider_id === userId || engagement.receiver_id === userId) {
+                        socket.join(engagementId);
+                        console.log(`User ${session.user.email} joined room ${engagementId}`);
+                    }
+                }
+            } catch (error) {
+                console.error("Error joining room:", error);
+            }
+        });
+
+        socket.on("send_message", async (data) => {
+            const { engagementId, content } = data;
+            try {
+                // Get user id
+                const userQuery = "SELECT id FROM person WHERE email = $1";
+                const userRes = await getDataByArray(userQuery, [session.user.email]);
+                const userId = userRes[0].id;
+
+                const messageId = crypto.randomUUID();
+                const query = `INSERT INTO messages (id, engagement_id, sender_id, content) 
+                               VALUES ($1, $2, $3, $4)`;
+                await insertData(query, [messageId, engagementId, userId, content]);
+
+                io.to(engagementId).emit("receive_message", {
+                    id: messageId,
+                    sender_id: userId,
+                    content: content,
+                    sent_at: new Date()
+                });
+            } catch (error) {
+                console.error("Error sending message:", error);
+            }
+        });
+    }
+});
 
 app.get("/api/current-user", async (req, res) => {
     try {
@@ -435,12 +498,64 @@ app.get("/gigs", checkCurrentUser, (req, res) => {
     return res.redirect("/login");
 });
 
+app.get("/chat", checkCurrentUser, (req, res) => {
+    if (req.isUserLoggedIn)
+        return res.sendFile(path.join(__dirname, "views", "chat.html"));
+    
+    return res.redirect("/login");
+});
+
+app.get("/api/user/:id", async (req, res) => {
+    try {
+        const query = "SELECT id, firstname, lastname, email FROM person WHERE id = $1";
+        const response = await getDataByArray(query, [req.params.id]);
+        const person = response[0];
+
+        if (!person)
+            return res.status(404).json({ result: false, message: "User not found"});
+        
+        return res.status(200).json({ result: true, data: person});
+    } catch(error) {
+        return res.status(500).json({ result: false, message: `Error fetching user: ${error}`});
+    }
+});
+
+app.get("/api/messages/:engagementId", async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ result: false, message: "User not logged in" });
+    
+    const { engagementId } = req.params;
+    const userEmail = req.session.user.email;
+
+    try {
+        // Validate access
+        let query = "SELECT id FROM person WHERE email = $1";
+        let response = await getDataByArray(query, [userEmail]);
+        const user = response[0];
+        
+        query = "SELECT * FROM engagements WHERE id = $1";
+        response = await getDataByArray(query, [engagementId]);
+        const engagement = response[0];
+
+        if (!engagement) return res.status(404).json({ message: "Engagement not found" });
+        if (engagement.provider_id !== user.id && engagement.receiver_id !== user.id) {
+            return res.status(403).json({ message: "Not authorized" });
+        }
+
+        query = "SELECT * FROM messages WHERE engagement_id = $1 ORDER BY sent_at ASC";
+        const messages = await getDataByArray(query, [engagementId]);
+
+        return res.status(200).json({ result: true, data: messages });
+    } catch (error) {
+        return res.status(500).json({ result: false, message: `Error fetching messages: ${error}` });
+    }
+});
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send("Something broke!");
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server Running on port: ${port}`);
     connectClient();
 });
