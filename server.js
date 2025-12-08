@@ -14,17 +14,17 @@ import {
 } from "./public/script/db.js";
 import { checkCurrentUser } from "./public/middleware/middleware.js";
 import dotenv from "dotenv";
+dotenv.config();
 import { Server } from "socket.io";
 import http from "http";
 
-dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const port = 5000;
+const port = process.env.PORT || 4000;
 
 const MemoryStore = memorystore(session);
 
