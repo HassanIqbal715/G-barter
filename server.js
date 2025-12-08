@@ -174,12 +174,16 @@ app.post("/api/create-user", async (req, res) => {
         let response = await getDataByArray(query, [data.email]);
         const person = response[0];
 
+        console.log(person);
+
         if (person) {
             return res.status(401).json({ message: "User already exists "});
         }
 
         const hash = await bcrypt.hash(data.password, 10);
         data.hashedPassword = hash;
+
+        console.log(data);
 
         query = `INSERT INTO person (id, email, password, 
         firstname, lastname, birthdate) VALUES ($1, $2, $3, $4, $5, $6)`;
@@ -193,14 +197,17 @@ app.post("/api/create-user", async (req, res) => {
             data.dob
         ];
 
+        console.log(valuesArray);
+        
         await insertData(query, valuesArray);
         req.session.user = {
             email: data.email
         };
-
+        console.log("It was a success nigga!");
         return res.status(200).json({ result: true, message: "Success" });
     }
     catch(error) {
+        console.log("FUCK");
         return res.status(500).json({ result: false, message: `Error could not create account: 
             ${error}`});
     }

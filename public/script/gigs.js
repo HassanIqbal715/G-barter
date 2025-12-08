@@ -55,11 +55,9 @@ async function engageGig(advertId, btn) {
         });
         const result = await response.json();
         if (result.result) {
-            alert("Engagement created!");
             loadEngagements();
             loadGigs();
         } else {
-            alert(result.message);
             if (btn) {
                 btn.innerText = "Engage";
                 btn.disabled = false;
@@ -67,7 +65,6 @@ async function engageGig(advertId, btn) {
         }
     } catch (error) {
         console.error(error);
-        alert("An error occurred");
         if (btn) {
             btn.innerText = "Engage";
             btn.disabled = false;
@@ -83,10 +80,10 @@ async function completeEngagement(engagementId) {
     });
     const result = await response.json();
     if (result.result) {
-        alert(result.message);
+        console.log(result.message);
         loadEngagements();
     } else {
-        alert(result.message);
+        console.log(result.message);
     }
 }
 
@@ -98,14 +95,14 @@ async function deleteGig(id, cardElement) {
     });
     const result = await response.json();
     if (result.result) {
-        alert("Gig deleted");
+        console.log("Gig deleted");
         if (cardElement) {
             cardElement.remove();
         } else {
             loadGigs();
         }
     } else {
-        alert(result.message);
+        console.log(result.message);
     }
 }
 
@@ -124,11 +121,11 @@ async function cancelEngagement(id, btn) {
     });
     const result = await response.json();
     if (result.result) {
-        alert("Engagement cancelled");
+        console.log("Engagement cancelled");
         loadEngagements();
         loadGigs();
     } else {
-        alert(result.message);
+        console.log(result.message);
         if (btn) {
             btn.innerText = "Cancel";
             btn.disabled = false;
@@ -209,7 +206,7 @@ submit.addEventListener("click", async () => {
         loadGigs();
     } catch (error) {
         console.error(error);
-        alert("Failed to create gig");
+        console.log("Failed to create gig");
     } finally {
         submit.disabled = false;
         submit.innerText = "Create Gig";

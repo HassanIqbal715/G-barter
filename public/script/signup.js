@@ -165,4 +165,4 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
-checkCurrentUser();
+// checkCurrentUser();
