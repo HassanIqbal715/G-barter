@@ -1,30 +1,35 @@
 const headerButtons = document.querySelector("#header-buttons");
 const headerProfile = document.querySelector("#header-profile");
 const headerProfileText = document.querySelector("#header-profile-text");
-const headerLogout = document.querySelector("#logout");
+const headerLogout = document.querySelector("#logout-btn");
 const loader = document.querySelector("#loader");
 
 async function getCurrentUser() {
-    const response = await fetch("/api/current-user");
-    const data = await response.json();
+    try {
+        const response = await fetch("/api/current-user");
+        const data = await response.json();
 
-    if (data.result) {
-        const user = data.data;
+        if (data.result) {
+            const user = data.data;
 
-        let username = user.firstname + " " + user.lastname;
+            let username = user.firstname + " " + user.lastname;
 
-        headerProfileText.textContent = username;
-        headerButtons.style.display = "none";
-        headerProfile.style.display = "flex";
+            headerProfileText.textContent = username;
+            headerButtons.style.display = "none";
+            headerProfile.style.display = "flex";
+        }
+    } catch (error) {
+        console.error("Error fetching current user:", error);
+    } finally {
+        loader.style.display = "none";
+        document.body.style.overflow = "auto";
     }
-
-    loader.style.display = "none";
-    document.body.style.overflow = "auto";
 }
 
 await getCurrentUser();
 
-headerLogout.addEventListener("click", async () => {
+headerLogout.addEventListener("click", async (e) => {
+    e.preventDefault();
     const response = await fetch("/logout");
     const data = await response.json();
 
@@ -32,9 +37,6 @@ headerLogout.addEventListener("click", async () => {
         console.error(data.error);
     }
     else if (data.result == true) {
-        if (window.location.href == "/")
-            window.location.reload();
-        else
-            window.location.href = "/";
+        window.location.href = "/";
     }
 });

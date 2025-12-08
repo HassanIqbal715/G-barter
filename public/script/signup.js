@@ -132,14 +132,37 @@ async function createAccount(email, password, firstname, lastname, dob) {
         body: JSON.stringify({ person })
     });
 
-    console.log(response);
+    const result = await response.json();
+
+    if (result.result == true) {
+        window.location.href = "/gigs";
+    }
+    else {
+        console.error(result.message);
+    }
 }
 
 submit.addEventListener("click", async () => {
     if (checkFields()) {
-        await createAccount(email.value.trim(), password.value.trim(), 
-        firstname.value.trim(), lastname.value.trim(), dob.value.trim());
+        submit.disabled = true;
+        submit.innerText = "Signing up...";
+
+        try {
+            await createAccount(email.value.trim(), password.value.trim(), 
+            firstname.value.trim(), lastname.value.trim(), dob.value.trim());
+        } catch (error) {
+            console.error(error);
+        } finally {
+            submit.disabled = false;
+            submit.innerText = "Sign Up";
+        }
     }
 });
 
-checkCurrentUser();
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        submit.click();
+    }
+});
+
+// checkCurrentUser();
