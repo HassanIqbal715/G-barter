@@ -132,7 +132,14 @@ async function createAccount(email, password, firstname, lastname, dob) {
         body: JSON.stringify({ person })
     });
 
-    console.log(response);
+    const result = await response.json();
+
+    if (result.result == true) {
+        window.location.href = "/gigs";
+    }
+    else {
+        console.error(result.message);
+    }
 }
 
 submit.addEventListener("click", async () => {

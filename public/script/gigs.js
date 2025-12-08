@@ -41,6 +41,126 @@ async function insertGig() {
     console.log(response);
 }
 
+async function engageGig(advertId) {
+    const response = await fetch("/api/create-engagement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ advertId })
+    });
+    const result = await response.json();
+    if (result.result) {
+        alert("Engagement created!");
+        loadEngagements();
+    } else {
+        alert(result.message);
+    }
+}
+
+async function completeEngagement(engagementId) {
+    const response = await fetch("/api/complete-engagement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ engagementId })
+    });
+    const result = await response.json();
+    if (result.result) {
+        alert(result.message);
+        loadEngagements();
+    } else {
+        alert(result.message);
+    }
+}
+
+async function deleteGig(id) {
+    if (!confirm("Are you sure you want to delete this gig?")) return;
+
+    const response = await fetch(`/api/advert/${id}`, {
+        method: "DELETE"
+    });
+    const result = await response.json();
+    if (result.result) {
+        alert("Gig deleted");
+        loadGigs();
+    } else {
+        alert(result.message);
+    }
+}
+
+async function cancelEngagement(id) {
+    if (!confirm("Are you sure you want to cancel this engagement?")) return;
+
+    const response = await fetch("/api/cancel-engagement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ engagementId: id })
+    });
+    const result = await response.json();
+    if (result.result) {
+        alert("Engagement cancelled");
+        loadEngagements();
+    } else {
+        alert(result.message);
+    }
+}
+
+async function loadEngagements() {
+    const response = await fetch("/api/my-engagements");
+    const result = await response.json();
+    
+    if (!result.result) return;
+
+    const activeGrid = document.querySelector("#engagements-grid");
+    const completedGrid = document.querySelector("#completed-engagements-grid");
+    activeGrid.innerHTML = "";
+    completedGrid.innerHTML = "";
+
+    result.data.forEach(eng => {
+        if (eng.status === 'cancelled') return;
+
+        const card = document.createElement("div");
+        card.classList.add("gig-card");
+        
+        let statusText = eng.status;
+        if (eng.status === 'active') {
+            if (eng.provider_completed && !eng.receiver_completed) statusText = "Waiting for receiver";
+            else if (!eng.provider_completed && eng.receiver_completed) statusText = "Waiting for provider";
+            else statusText = "In Progress";
+        }
+
+        card.innerHTML = `
+            <div class="gig-card-body">
+                <div class="gig-exchange">
+                    <div class="gig-side">
+                        <span class="gig-label">TEACHING</span>
+                        <div class="gig-skill">${eng.skill_provided}</div>
+                    </div>
+                    <div class="gig-arrow">⇄</div>
+                    <div class="gig-side">
+                        <span class="gig-label">LEARNING</span>
+                        <div class="gig-skill">${eng.skill_wanted}</div>
+                    </div>
+                </div>
+                <p class="gig-description">${eng.description}</p>
+                <div class="gig-footer">
+                    <div class="gig-status">Status: ${statusText}</div>
+                    ${eng.status !== 'completed' ? `
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="completeEngagement('${eng.id}')" class="gig-action-btn">Mark Complete</button>
+                            <button onclick="cancelEngagement('${eng.id}')" class="gig-action-btn" style="background-color: #ef4444;">Cancel</button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        if (eng.status === 'completed') {
+            completedGrid.appendChild(card);
+        } else {
+            activeGrid.appendChild(card);
+        }
+    });
+}
+
 submit.addEventListener("click", async () => {
     if (!checkInputs())
         return; 
@@ -52,7 +172,7 @@ submit.addEventListener("click", async () => {
 const grid = document.querySelector("#gigs-grid");
 
 function createGig(id, want, prov, desc, firstname, lastname, colorNum, 
-    user_id) {
+    user_id, engagement_count, isOwner) {
     const colors = [
         { backgroundColor: "#bfdbfe", color: "#1e40af" },
         { backgroundColor: "#fef3c7", color: "#92400e" },
@@ -82,6 +202,7 @@ function createGig(id, want, prov, desc, firstname, lastname, colorNum,
     const avatar = document.createElement("div");
     const username = document.createElement("span");
     const actionButton = document.createElement("button");
+    const engagementInfo = document.createElement("div");
 
     card.classList.add("gig-card");
     body.classList.add("gig-card-body");
@@ -99,6 +220,18 @@ function createGig(id, want, prov, desc, firstname, lastname, colorNum,
     avatar.classList.add("user-avatar");
     username.classList.add("user-name");
     actionButton.classList.add("gig-action-btn");
+    engagementInfo.classList.add("gig-status");
+
+    if (isOwner) {
+        actionButton.innerText = "Delete";
+        actionButton.style.backgroundColor = "#ef4444";
+        actionButton.onclick = () => deleteGig(id);
+    } else {
+        actionButton.innerText = "Engage";
+        actionButton.onclick = () => engageGig(id);
+    }
+
+    engagementInfo.innerText = `${engagement_count} active engagements`;
 
     side2.style.alignItems = "flex-end";
     avatar.style.backgroundColor = colors[colorNum].backgroundColor;
@@ -112,7 +245,6 @@ function createGig(id, want, prov, desc, firstname, lastname, colorNum,
     description.textContent = desc;
     username.textContent = firstname + " " + lastname;
     avatar.textContent = firstname[0].toUpperCase() + lastname[0].toUpperCase();
-    actionButton.textContent = "Connect";
 
     side1.appendChild(label1);
     side1.appendChild(skill1);
@@ -126,13 +258,15 @@ function createGig(id, want, prov, desc, firstname, lastname, colorNum,
     user.appendChild(avatar);
     user.appendChild(username);
     footer.appendChild(user);
+    footer.appendChild(engagementInfo);
     footer.appendChild(actionButton);
+
     body.appendChild(footer);
     card.appendChild(body);
     grid.appendChild(card);
 }
 
-async function createGigs() {
+async function loadGigs() {
     let colorNum = 0;
     const totalColors = 10;
     const response = await fetch("/api/advert");
@@ -141,10 +275,16 @@ async function createGigs() {
     if (gigsData.result == false)
         return;
 
+    // Get current user to check ownership
+    const userResponse = await fetch("/api/current-user");
+    const userData = await userResponse.json();
+    const currentUserId = userData.result ? userData.data.id : null;
+
     for (let x of gigsData.data) {
         createGig(x.id, x.skill_wanted, x.skill_provided, x.description, 
-            x.firstname, x.lastname, (colorNum++ % totalColors), x.user_id);
+            x.firstname, x.lastname, (colorNum++ % totalColors), x.user_id, x.engagement_count, x.user_id === currentUserId);
     }
 }
 
-createGigs();
+loadGigs();
+loadEngagements();
