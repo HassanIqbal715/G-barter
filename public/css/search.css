@@ -11,6 +11,31 @@ body {
     padding-bottom: 80px;
 }
 
+/* --- Search Section --- */
+.search-container {
+    max-width: 800px;
+    margin: 40px auto;
+    margin-top: 96px;
+    padding: 0 20px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 16px 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    outline: none;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
 /* --- Post a Gig Section --- */
 .post-gig-container {
     background-color: #ffffff;
@@ -223,8 +248,8 @@ body {
 }
 
 .user-avatar {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 36px;
     background-color: #d1fae5;
     color: #065f46;
     border-radius: 50%;

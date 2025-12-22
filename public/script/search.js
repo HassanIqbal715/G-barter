@@ -1,45 +1,9 @@
-// Insert gigs
-const teaching = document.querySelector("#post-gig-teach");
-const want = document.querySelector("#post-gig-want");
-const description = document.querySelector("#post-gig-description");
-const submit = document.querySelector("#post-gig-submit");
-
-function checkEmpty(inp) {
-    if (inp.value.trim() == "")
-        return false;
-    return true;
-}
-
-function checkInputs() {
-    if (!checkEmpty(teaching) | !checkEmpty(want))
-        return false;
-    return true;
-}
-
-async function insertGig() {
-    let response = await fetch("/api/current-user");
-    let user = await response.json();
-
-    if (user.result == false)
-        return;
-    
-    const advert = {
-        id: crypto.randomUUID(),
-        description: description.value.trim(),
-        skillWanted: want.value.trim(),
-        skillProvided: teaching.value.trim(),
-        isActive: true,
-        userID: user.data.id
-    };
-
-    response = await fetch("/api/create-advert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ advert })
-    });   
-
-    console.log(response);
-}
+// Search page logic
+const grid = document.querySelector("#gigs-grid");
+const searchInput = document.querySelector("#search-input");
+let allGigs = [];
+let currentUserId = null;
+let myEngagedAdvertIds = new Set();
 
 async function engageGig(advertId, btn) {
     if (btn) {
@@ -138,100 +102,13 @@ async function cancelEngagement(id, btn) {
 }
 
 async function loadEngagements() {
-    const response = await fetch("/api/my-engagements");
-    const result = await response.json();
-    
-    if (!result.result) return;
-
-    // Get current user to check completion status
-    const userResponse = await fetch("/api/current-user");
-    const userData = await userResponse.json();
-    const currentUserId = userData.result ? userData.data.id : null;
-
-    const activeGrid = document.querySelector("#engagements-grid");
-    const completedGrid = document.querySelector("#completed-engagements-grid");
-    activeGrid.innerHTML = "";
-    completedGrid.innerHTML = "";
-
-    result.data.forEach(eng => {
-        if (eng.status === 'cancelled') return;
-
-        const card = document.createElement("div");
-        card.classList.add("gig-card");
-        
-        let statusText = eng.status;
-        if (eng.status === 'active') {
-            if (eng.provider_completed && !eng.receiver_completed) statusText = "Waiting for receiver";
-            else if (!eng.provider_completed && eng.receiver_completed) statusText = "Waiting for provider";
-            else statusText = "In Progress";
-        }
-
-        const isProvider = eng.provider_id === currentUserId;
-        const isReceiver = eng.receiver_id === currentUserId;
-        const userCompleted = (isProvider && eng.provider_completed) || (isReceiver && eng.receiver_completed);
-
-        card.innerHTML = `
-            <div class="gig-card-body">
-                <div class="gig-exchange">
-                    <div class="gig-side">
-                        <span class="gig-label">TEACHING</span>
-                        <div class="gig-skill">${eng.skill_provided}</div>
-                    </div>
-                    <div class="gig-arrow">⇄</div>
-                    <div class="gig-side">
-                        <span class="gig-label">LEARNING</span>
-                        <div class="gig-skill">${eng.skill_wanted}</div>
-                    </div>
-                </div>
-                <p class="gig-description">${eng.description}</p>
-                <div class="gig-footer">
-                    <div class="gig-status">Status: ${statusText}</div>
-                    ${eng.status !== 'completed' ? `
-                        <div style="display: flex; gap: 8px;">
-                            ${!userCompleted ? 
-                                `<button onclick="completeEngagement('${eng.id}')" class="gig-action-btn">Mark Complete</button>` : 
-                                `<button disabled class="gig-action-btn" style="background-color: #9ca3af; cursor: default;">Waiting for other</button>`
-                            }
-                            <button onclick="cancelEngagement('${eng.id}', this)" class="gig-action-btn" style="background-color: #ef4444;">Cancel</button>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        
-        if (eng.status === 'completed') {
-            completedGrid.appendChild(card);
-        } else {
-            activeGrid.appendChild(card);
-        }
-    });
+    // We don't need to load engagements on the search page, 
+    // but we might need to know which gigs are already engaged by the user to disable the button.
+    // The loadGigs function handles the "engaged" status check.
 }
 
-submit.addEventListener("click", async () => {
-    if (!checkInputs())
-        return; 
-
-    submit.disabled = true;
-    submit.innerText = "Creating...";
-
-    try {
-        await insertGig();
-        description.value = "";
-        want.value = "";
-        teaching.value = "";
-        loadGigs();
-        showModal("Gig created successfully!", "alert");
-    } catch (error) {
-        console.error(error);
-        showModal("Failed to create gig", "alert");
-    } finally {
-        submit.disabled = false;
-        submit.innerText = "Create Gig";
-    }
-});
-
 // Load gigs
-const grid = document.querySelector("#gigs-grid");
+// const grid = document.querySelector("#gigs-grid"); // Already defined at top
 
 function createGig(id, want, prov, desc, firstname, lastname, colorNum, 
     user_id, engagement_count, isOwner, isEngaged) {
@@ -333,25 +210,38 @@ function createGig(id, want, prov, desc, firstname, lastname, colorNum,
     grid.appendChild(card);
 }
 
+function renderGigs(gigs) {
+    grid.innerHTML = ""; // Clear grid before adding items
+    let colorNum = 0;
+    const totalColors = 10;
+
+    for (let x of gigs) {
+        if (x.user_id !== currentUserId) {
+            createGig(x.id, x.skill_wanted, x.skill_provided, x.description, 
+                x.firstname, x.lastname, (colorNum++ % totalColors), x.user_id, x.engagement_count, x.user_id === currentUserId, myEngagedAdvertIds.has(x.id));
+        }
+    }
+}
+
 async function loadGigs() {
     try {
-        let colorNum = 0;
-        const totalColors = 10;
         const response = await fetch("/api/advert");
         const gigsData = await response.json();
 
         if (gigsData.result == false)
             return;
 
+        allGigs = gigsData.data;
+
         // Get current user to check ownership
         const userResponse = await fetch("/api/current-user");
         const userData = await userResponse.json();
-        const currentUserId = userData.result ? userData.data.id : null;
+        currentUserId = userData.result ? userData.data.id : null;
 
         // Get my engagements to check status
         const engagementResponse = await fetch("/api/my-engagements");
         const engagementData = await engagementResponse.json();
-        const myEngagedAdvertIds = new Set();
+        myEngagedAdvertIds = new Set();
         if (engagementData.result) {
             engagementData.data.forEach(eng => {
                 if (eng.status === 'active') {
@@ -360,16 +250,23 @@ async function loadGigs() {
             });
         }
 
-        grid.innerHTML = ""; // Clear grid before adding items
-
-        for (let x of gigsData.data) {
-            createGig(x.id, x.skill_wanted, x.skill_provided, x.description, 
-                x.firstname, x.lastname, (colorNum++ % totalColors), x.user_id, x.engagement_count, x.user_id === currentUserId, myEngagedAdvertIds.has(x.id));
-        }
+        renderGigs(allGigs);
     } catch (error) {
         console.error("Error loading gigs:", error);
     }
 }
 
+if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+        const term = e.target.value.toLowerCase();
+        const filteredGigs = allGigs.filter(gig => 
+            gig.skill_wanted.toLowerCase().includes(term) || 
+            gig.skill_provided.toLowerCase().includes(term) ||
+            gig.description.toLowerCase().includes(term)
+        );
+        renderGigs(filteredGigs);
+    });
+}
+
 loadGigs();
-loadEngagements();
+// loadEngagements();
