@@ -374,6 +374,40 @@ async function loadGigs() {
     }
 }
 
+async function confirmTriTrade(gigA, gigB, gigC, btn) {
+    if (btn) {
+        btn.innerText = "Confirming...";
+        btn.disabled = true;
+    }
+
+    try {
+        const response = await fetch("/api/confirm-tri-trade", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ gigA, gigB, gigC })
+        });
+        const result = await response.json();
+        
+        if (result.result) {
+            showModal(result.message, "alert");
+            fetchAndRenderTriplets(); // Refresh UI
+        } else {
+            showModal(result.message, "alert");
+            if (btn) {
+                btn.innerText = "Confirm My Part";
+                btn.disabled = false;
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        showModal("An error occurred", "alert");
+        if (btn) {
+            btn.innerText = "Confirm My Part";
+            btn.disabled = false;
+        }
+    }
+}
+
 async function fetchAndRenderTriplets() {
     try {
         const response = await fetch("/api/tri-trades");
@@ -402,6 +436,7 @@ async function fetchAndRenderTriplets() {
             // Determine who is who relative to the current user
             let userA, userB, userC;
             let skillA, skillB, skillC;
+            let myAccepted = false;
             
             // We want to display it as: You (A) -> B -> C -> You (A)
             // So we need to rotate the trade data so current user is A
@@ -412,6 +447,7 @@ async function fetchAndRenderTriplets() {
                 skillA = trade.skill_a_provided;
                 skillB = trade.skill_b_provided;
                 skillC = trade.skill_c_provided;
+                myAccepted = trade.a_accepted;
             } else if (trade.user_b_id === currentUserId) {
                 userA = { name: "You", id: trade.user_b_id, isMe: true };
                 userB = { name: trade.user_c_firstname + " " + trade.user_c_lastname, id: trade.user_c_id, isMe: false, initials: trade.user_c_firstname[0] + trade.user_c_lastname[0] };
@@ -419,6 +455,7 @@ async function fetchAndRenderTriplets() {
                 skillA = trade.skill_b_provided;
                 skillB = trade.skill_c_provided;
                 skillC = trade.skill_a_provided;
+                myAccepted = trade.b_accepted;
             } else {
                 userA = { name: "You", id: trade.user_c_id, isMe: true };
                 userB = { name: trade.user_a_firstname + " " + trade.user_a_lastname, id: trade.user_a_id, isMe: false, initials: trade.user_a_firstname[0] + trade.user_a_lastname[0] };
@@ -426,10 +463,21 @@ async function fetchAndRenderTriplets() {
                 skillA = trade.skill_c_provided;
                 skillB = trade.skill_a_provided;
                 skillC = trade.skill_b_provided;
+                myAccepted = trade.c_accepted;
             }
 
             const card = document.createElement("div");
             card.className = "card loop-card";
+            
+            let actionButton = "";
+            if (trade.circle_status === 'active') {
+                actionButton = `<button class="btn-primary" disabled style="background-color: #10b981; cursor: default;">Trade Active!</button>`;
+            } else if (myAccepted) {
+                actionButton = `<button class="btn-primary" disabled style="background-color: #9ca3af; cursor: default;">Waiting for others...</button>`;
+            } else {
+                actionButton = `<button class="btn-primary" onclick="confirmTriTrade('${trade.gig_a_id}', '${trade.gig_b_id}', '${trade.gig_c_id}', this)">Confirm My Part</button>`;
+            }
+
             card.innerHTML = `
                 <div class="loop-header">
                     <span class="loop-badge">⚡ 3-Way Match</span>
@@ -454,7 +502,7 @@ async function fetchAndRenderTriplets() {
                     </div>
                 </div>
                 <div class="card-actions">
-                    <button class="btn-primary" onclick="alert('Feature coming soon!')">Confirm My Part</button>
+                    ${actionButton}
                     <button class="btn-secondary">Decline</button>
                 </div>
             `;
