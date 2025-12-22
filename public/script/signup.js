@@ -135,7 +135,7 @@ async function createAccount(email, password, firstname, lastname, dob) {
     const result = await response.json();
 
     if (result.result == true) {
-        window.location.href = "/gigs";
+        window.location.href = "/dash";
     }
     else {
         console.error(result.message);

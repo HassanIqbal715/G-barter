@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Gigs | G barter</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/search.css">
+    <link rel="stylesheet" href="/css/modal.css">
+    <script>
+        fetch('/header.html')
+            .then(res => res.text())
+            .then(async data => {
+                document.querySelector('#header-container').innerHTML = data;
+                await import('/script/header.js');
+            });
+    </script>
+    <script src="/script/modal.js"></script>
+    <script src="/script/search.js" defer></script>
+</head>
+<body>
+    <div id="loader"></div>
+    <div id="header-container"></div>
+
+    <div class="search-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Search for skills (e.g. Guitar, Spanish)...">
+    </div>
+
+    <h1 class="gig-header">Available Gigs</h1>
+    <div class="gigs-grid" id="gigs-grid"></div>
+</body>
+</html>

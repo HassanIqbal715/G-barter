@@ -79,7 +79,7 @@ async function checkLogin(email, password) {
 
     if (result.result) {
         console.log("Logged in!");
-        window.location.href = "/gigs";
+        window.location.href = "/dash";
     }
     else {
         console.log(result.message);

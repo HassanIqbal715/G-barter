@@ -264,6 +264,32 @@ app.get("/api/advert", async (req, res) => {
     }
 });
 
+app.get("/api/search", async (req, res) => {
+    try {
+        const { term } = req.query;
+        const query = `SELECT advert.id as id, advert.description, 
+        advert.skill_wanted, advert.skill_provided, advert.creation_date, 
+        advert.is_active, person.id as user_id, person.firstname, 
+        person.lastname,
+        (SELECT COUNT(*) FROM engagements WHERE engagements.advert_id = advert.id AND engagements.status = 'active') as engagement_count
+        FROM advert, person 
+        WHERE advert.user_id = person.id 
+        AND (advert.skill_wanted ILIKE $1 OR advert.skill_provided ILIKE $1);`;
+
+        const response = await getDataByArray(query, [`%${term}%`]);
+        const data = response;
+
+        if (data)
+            return res.status(200).json({ result: true, data: data});
+        else
+            return res.status(400).json({ result: false, message: "Not found"});
+    }
+    catch(error) {
+        return res.status(500).json({ result: false, 
+            message: `Error could not fetch adverts: ${error}`});
+    }
+});
+
 app.post("/api/create-engagement", async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ result: false, message: "User not logged in" });
@@ -485,7 +511,7 @@ app.get("/login", (req, res) => {
 
 app.get("/signup", checkCurrentUser, (req, res) => {
     if (req.isUserLoggedIn)
-        return res.redirect("/gigs");
+        return res.redirect("/dash");
     
     return res.sendFile(path.join(__dirname, "views", "signup.html"));
 });
@@ -498,9 +524,16 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "views", "index.html"));
 });
 
-app.get("/gigs", checkCurrentUser, (req, res) => {
+app.get("/dash", checkCurrentUser, (req, res) => {
     if (req.isUserLoggedIn)
-        return res.sendFile(path.join(__dirname, "views", "gigs.html"));
+        return res.sendFile(path.join(__dirname, "views", "dash.html"));
+    
+    return res.redirect("/login");
+});
+
+app.get("/search", checkCurrentUser, (req, res) => {
+    if (req.isUserLoggedIn)
+        return res.sendFile(path.join(__dirname, "views", "search.html"));
     
     return res.redirect("/login");
 });

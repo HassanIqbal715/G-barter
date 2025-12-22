@@ -1,0 +1,271 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+    color: #1f2937;
+    padding-bottom: 80px;
+}
+
+/* --- Post a Gig Section --- */
+.post-gig-container {
+    background-color: #ffffff;
+    max-width: 800px;
+    margin: 40px auto;
+    margin-top: 96px;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e7eb;
+}
+
+.post-gig-imp {
+    color: rgb(221, 77, 77);
+}
+
+.post-gig-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.post-gig-plus {
+    background-color: #ecfdf5;
+    color: #10b981;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    margin-right: 16px;
+}
+
+.post-gig-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.post-gig-form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.post-gig-input-container {
+    flex: 1;
+    margin-bottom: 16px;
+}
+
+.post-gig-input-text {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6b7280;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.post-gig-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s;
+    background-color: #f9fafb;
+    font-family: 'Inter', sans-serif; /* Ensures textarea uses the right font */
+}
+
+.post-gig-input:focus {
+    background-color: #fff;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* New Style for Textarea */
+.post-gig-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.post-gig-submit {
+    background-color: #10b981;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+
+.post-gig-submit:hover {
+    background-color: #059669;
+}
+
+/* --- Active Gigs Section --- */
+.gig-header {
+    max-width: 1200px;
+    margin: 0 auto 24px auto;
+    padding: 0 20px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.gigs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- Gig Card --- */
+.gig-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.gig-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: #d1d5db;
+}
+
+.gig-card-body {
+    padding: 20px;
+    flex: 1;
+}
+
+.gig-exchange {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    background-color: #f8fafc;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.gig-side {
+    display: flex;
+    flex-direction: column;
+    width: 45%;
+}
+
+.gig-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+
+.gig-skill {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gig-arrow {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.gig-description {
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.gig-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #fff;
+}
+
+.gig-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 48px;
+    height: 36px;
+    background-color: #d1fae5;
+    color: #065f46;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.gig-action-btn {
+    background-color: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.gig-action-btn:hover {
+    background-color: #059669;
+}
+
+.gig-status {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+    .post-gig-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
