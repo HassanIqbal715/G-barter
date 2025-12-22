@@ -590,6 +590,30 @@ app.get("/api/messages/:engagementId", async (req, res) => {
     }
 });
 
+app.get("/api/tri-trades", async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ result: false, message: "User not logged in" });
+    const userEmail = req.session.user.email;
+
+    try {
+        // Get current user ID
+        let query = "SELECT id FROM person WHERE email = $1";
+        let response = await getDataByArray(query, [userEmail]);
+        const user = response[0];
+        
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Fetch tri-trades where the user is involved
+        query = `SELECT * FROM view_tri_trades 
+                 WHERE user_a_id = $1 OR user_b_id = $1 OR user_c_id = $1`;
+        
+        const trades = await getDataByArray(query, [user.id]);
+        return res.status(200).json({ result: true, data: trades });
+
+    } catch (error) {
+        return res.status(500).json({ result: false, message: `Error fetching tri-trades: ${error}` });
+    }
+});
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send("Something broke!");

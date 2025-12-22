@@ -269,3 +269,54 @@ body {
         gap: 0;
     }
 }
+
+/* --- Tri-Trade Loop Card --- */
+.loop-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 20px;
+    max-width: 400px;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 20px;
+    border-left: 5px solid #6c5ce7;
+}
+.loop-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+.loop-badge { background: #e0dfff; color: #6c5ce7; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+.loop-time { color: #b2bec3; font-size: 0.8rem; }
+.loop-flow { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.flow-step { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 10px; border-radius: 8px; }
+.step-icon { display: flex; flex-direction: column; align-items: center; font-size: 0.8rem; font-weight: 600; width: 50px; }
+.step-icon img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-bottom: 4px; }
+.step-arrow { flex-grow: 1; text-align: center; color: #b2bec3; display: flex; flex-direction: column; font-size: 1.2rem; }
+.arrow-label { font-size: 0.7rem; color: #636e72; margin-bottom: -5px; text-transform: uppercase; }
+.flow-connector { text-align: center; font-size: 0.75rem; color: #b2bec3; padding: 5px 0; border-left: 2px dashed #dfe6e9; margin-left: 25px; padding-left: 15px; }
+.card-actions { display: flex; gap: 10px; }
+.btn-primary { flex: 1; background: #00b894; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.btn-secondary { background: #d63031; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.my-icon {
+    width: 32px;
+    height: 32px;
+    background-color: #d1fae5;
+    color: #065f46;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+}
+.other-icon {
+    width: 32px;
+    height: 32px;
+    background-color: #bfdbfe;
+    color: #1e40af;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+}
