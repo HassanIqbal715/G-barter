@@ -220,6 +220,7 @@ submit.addEventListener("click", async () => {
         want.value = "";
         teaching.value = "";
         loadGigs();
+        fetchAndRenderTriplets();
         showModal("Gig created successfully!", "alert");
     } catch (error) {
         console.error(error);
@@ -373,5 +374,146 @@ async function loadGigs() {
     }
 }
 
+async function confirmTriTrade(gigA, gigB, gigC, btn) {
+    if (btn) {
+        btn.innerText = "Confirming...";
+        btn.disabled = true;
+    }
+
+    try {
+        const response = await fetch("/api/confirm-tri-trade", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ gigA, gigB, gigC })
+        });
+        const result = await response.json();
+        
+        if (result.result) {
+            showModal(result.message, "alert");
+            fetchAndRenderTriplets(); // Refresh UI
+        } else {
+            showModal(result.message, "alert");
+            if (btn) {
+                btn.innerText = "Confirm My Part";
+                btn.disabled = false;
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        showModal("An error occurred", "alert");
+        if (btn) {
+            btn.innerText = "Confirm My Part";
+            btn.disabled = false;
+        }
+    }
+}
+
+async function fetchAndRenderTriplets() {
+    try {
+        const response = await fetch("/api/tri-trades");
+        const result = await response.json();
+        
+        if (!result.result) return;
+
+        const container = document.querySelector("#tri-trades-grid");
+        if (!container) return; // Ensure container exists in HTML
+        
+        container.innerHTML = "";
+
+        // Get current user ID to orient the loop correctly
+        const userResponse = await fetch("/api/current-user");
+        const userData = await userResponse.json();
+        const currentUserId = userData.result ? userData.data.id : null;
+
+        const renderedTrades = new Set();
+
+        result.data.forEach(trade => {
+            // Deduplicate trades
+            const tradeId = [trade.gig_a_id, trade.gig_b_id, trade.gig_c_id].sort().join('-');
+            if (renderedTrades.has(tradeId)) return;
+            renderedTrades.add(tradeId);
+
+            // Determine who is who relative to the current user
+            let userA, userB, userC;
+            let skillA, skillB, skillC;
+            let myAccepted = false;
+            
+            // We want to display it as: You (A) -> B -> C -> You (A)
+            // So we need to rotate the trade data so current user is A
+            if (trade.user_a_id === currentUserId) {
+                userA = { name: "You", id: trade.user_a_id, isMe: true };
+                userB = { name: trade.user_b_firstname + " " + trade.user_b_lastname, id: trade.user_b_id, isMe: false, initials: trade.user_b_firstname[0] + trade.user_b_lastname[0] };
+                userC = { name: trade.user_c_firstname + " " + trade.user_c_lastname, id: trade.user_c_id, isMe: false, initials: trade.user_c_firstname[0] + trade.user_c_lastname[0] };
+                skillA = trade.skill_a_provided;
+                skillB = trade.skill_b_provided;
+                skillC = trade.skill_c_provided;
+                myAccepted = trade.a_accepted;
+            } else if (trade.user_b_id === currentUserId) {
+                userA = { name: "You", id: trade.user_b_id, isMe: true };
+                userB = { name: trade.user_c_firstname + " " + trade.user_c_lastname, id: trade.user_c_id, isMe: false, initials: trade.user_c_firstname[0] + trade.user_c_lastname[0] };
+                userC = { name: trade.user_a_firstname + " " + trade.user_a_lastname, id: trade.user_a_id, isMe: false, initials: trade.user_a_firstname[0] + trade.user_a_lastname[0] };
+                skillA = trade.skill_b_provided;
+                skillB = trade.skill_c_provided;
+                skillC = trade.skill_a_provided;
+                myAccepted = trade.b_accepted;
+            } else {
+                userA = { name: "You", id: trade.user_c_id, isMe: true };
+                userB = { name: trade.user_a_firstname + " " + trade.user_a_lastname, id: trade.user_a_id, isMe: false, initials: trade.user_a_firstname[0] + trade.user_a_lastname[0] };
+                userC = { name: trade.user_b_firstname + " " + trade.user_b_lastname, id: trade.user_b_id, isMe: false, initials: trade.user_b_firstname[0] + trade.user_b_lastname[0] };
+                skillA = trade.skill_c_provided;
+                skillB = trade.skill_a_provided;
+                skillC = trade.skill_b_provided;
+                myAccepted = trade.c_accepted;
+            }
+
+            const card = document.createElement("div");
+            card.className = "card loop-card";
+            
+            let actionButton = "";
+            if (trade.circle_status === 'active') {
+                actionButton = `<button class="btn-primary" disabled style="background-color: #10b981; cursor: default;">Trade Active!</button>`;
+            } else if (myAccepted) {
+                actionButton = `<button class="btn-primary" disabled style="background-color: #9ca3af; cursor: default;">Waiting for others...</button>`;
+            } else {
+                actionButton = `<button class="btn-primary" onclick="confirmTriTrade('${trade.gig_a_id}', '${trade.gig_b_id}', '${trade.gig_c_id}', this)">Confirm My Part</button>`;
+            }
+
+            card.innerHTML = `
+                <div class="loop-header">
+                    <span class="loop-badge">⚡ 3-Way Match</span>
+                </div>
+                <div class="loop-flow">
+                    <div class="flow-step">
+                        <div class="step-icon my-icon">You</div>
+                        <div class="step-arrow">
+                            <span class="arrow-label">Teaching <strong>${skillA}</strong></span> ➔
+                        </div>
+                        <div class="step-icon other-icon">${userB.initials}</div>
+                    </div>
+                    <div class="flow-connector">
+                        <div class="connector-label">${userB.name} teaches <strong>${skillB}</strong> to ${userC.name}</div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="step-icon other-icon">${userC.initials}</div>
+                        <div class="step-arrow">
+                            <span class="arrow-label">Teaching <strong>${skillC}</strong></span> ➔
+                        </div>
+                        <div class="step-icon my-icon">You</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    ${actionButton}
+                    <button class="btn-secondary">Decline</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error("Error loading tri-trades:", error);
+    }
+}
+
 loadGigs();
 loadEngagements();
+fetchAndRenderTriplets();

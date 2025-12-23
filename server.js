@@ -590,6 +590,106 @@ app.get("/api/messages/:engagementId", async (req, res) => {
     }
 });
 
+app.get("/api/tri-trades", async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ result: false, message: "User not logged in" });
+    const userEmail = req.session.user.email;
+
+    try {
+        // Get current user ID
+        let query = "SELECT id FROM person WHERE email = $1";
+        let response = await getDataByArray(query, [userEmail]);
+        const user = response[0];
+        
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Fetch tri-trades where the user is involved, including status from trade_circles
+        query = `
+            SELECT v.*, 
+                   t.id as circle_id,
+                   t.a_accepted, 
+                   t.b_accepted, 
+                   t.c_accepted, 
+                   t.status as circle_status
+            FROM view_tri_trades v
+            LEFT JOIN trade_circles t 
+            ON v.gig_a_id = t.advert_a_id 
+            AND v.gig_b_id = t.advert_b_id 
+            AND v.gig_c_id = t.advert_c_id
+            WHERE v.user_a_id = $1 OR v.user_b_id = $1 OR v.user_c_id = $1
+        `;
+        
+        const trades = await getDataByArray(query, [user.id]);
+        return res.status(200).json({ result: true, data: trades });
+
+    } catch (error) {
+        return res.status(500).json({ result: false, message: `Error fetching tri-trades: ${error}` });
+    }
+});
+
+app.post("/api/confirm-tri-trade", async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ result: false, message: "User not logged in" });
+    const userEmail = req.session.user.email;
+    const { gigA, gigB, gigC } = req.body;
+
+    try {
+        // Get current user ID
+        let query = "SELECT id FROM person WHERE email = $1";
+        let response = await getDataByArray(query, [userEmail]);
+        const user = response[0];
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // 1. Find or Create trade circle
+        // Check if exists
+        query = "SELECT * FROM trade_circles WHERE advert_a_id = $1 AND advert_b_id = $2 AND advert_c_id = $3";
+        response = await getDataByArray(query, [gigA, gigB, gigC]);
+        let circle = response[0];
+
+        if (!circle) {
+            const id = crypto.randomUUID();
+            query = `INSERT INTO trade_circles (id, advert_a_id, advert_b_id, advert_c_id) 
+                     VALUES ($1, $2, $3, $4) RETURNING *`;
+            response = await getDataByArray(query, [id, gigA, gigB, gigC]);
+            circle = response[0];
+        }
+
+        // 2. Update Acceptance
+        // We need to know which user corresponds to which gig to know which accepted flag to set.
+        // We can query the adverts to find out owners.
+        // Or we can trust the view logic, but here we only have gig IDs.
+        // Let's fetch the owners of the gigs.
+        
+        const advertQuery = "SELECT id, user_id FROM advert WHERE id IN ($1, $2, $3)";
+        const adverts = await getDataByArray(advertQuery, [gigA, gigB, gigC]);
+        
+        const gigAObj = adverts.find(a => a.id === gigA);
+        const gigBObj = adverts.find(a => a.id === gigB);
+        const gigCObj = adverts.find(a => a.id === gigC);
+
+        let updateField = "";
+        if (gigAObj && gigAObj.user_id === user.id) updateField = "a_accepted";
+        else if (gigBObj && gigBObj.user_id === user.id) updateField = "b_accepted";
+        else if (gigCObj && gigCObj.user_id === user.id) updateField = "c_accepted";
+        else return res.status(403).json({ message: "You are not part of this trade circle" });
+
+        query = `UPDATE trade_circles SET ${updateField} = TRUE WHERE id = $1 RETURNING *`;
+        response = await getDataByArray(query, [circle.id]);
+        circle = response[0];
+
+        // 3. Check Completion
+        let message = "Waiting for others";
+        if (circle.a_accepted && circle.b_accepted && circle.c_accepted) {
+            query = "UPDATE trade_circles SET status = 'active' WHERE id = $1";
+            await insertData(query, [circle.id]);
+            message = "Trade Activated!";
+        }
+
+        return res.status(200).json({ result: true, message: message });
+
+    } catch (error) {
+        return res.status(500).json({ result: false, message: `Error confirming trade: ${error}` });
+    }
+});
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send("Something broke!");
